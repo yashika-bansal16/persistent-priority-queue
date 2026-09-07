@@ -1,8 +1,8 @@
 Persistent Priority Queue
 
-A Python implementation of a persistent priority queue.
+A Python implementation of a persistent priority queue using heaps and JSON file storage.
 
-The queue supports both minimum and maximum priority operations and stores its data in a JSON file so that the data is available even after restarting the program.
+The queue supports both minimum and maximum priority operations, and the data remains available even after restarting the program.
 
 Features
 
@@ -13,83 +13,91 @@ Features
 - Update an item's priority
 - Delete an item
 - Check if the queue is empty
-- Save and load queue data using JSON
+- Persistent storage using JSON
+- Automatically restores data when the program starts
 
 How It Works
 
-I used three main data structures:
+The implementation uses:
 
-- "items" - stores the actual items using their unique IDs.
-- "min_heap" - helps find the item with the lowest priority.
-- "max_heap" - helps find the item with the highest priority.
+1. Dictionary
 
-Python's "heapq" module is used for the heaps. For the max-heap, negative priority values are stored because "heapq" provides a min-heap.
+The "items" dictionary stores the actual queue items using a unique ID.
 
-For persistence, the queue is saved in "queue.json". When the program starts, the saved data is loaded and the heaps are rebuilt.
+ID → Value + Priority
 
-For update and delete operations, old heap entries can remain in the heap. These entries are checked and ignored when they are no longer valid.
+2. Min Heap
 
-Main Operations
+A min heap is used to quickly find the item with the lowest priority.
 
-Insert
+3. Max Heap
+
+A second heap is used for maximum-priority operations.
+
+Python's "heapq" module only provides a min heap, so negative priorities are stored to simulate a max heap.
+
+4. JSON Storage
+
+The current queue state is stored in "queue.json".
+
+When the program starts, the saved items are loaded and the heaps are rebuilt.
+
+Example
+
+from module import PersistentPriorityQueue
+
+pq = PersistentPriorityQueue()
 
 item_id = pq.insert("Study DSA", 5)
 
-Peek
-
-Returns the item with the lowest priority without removing it.
-
-pq.peek()
-
-Extract Min
-
-Removes and returns the item with the lowest priority.
-
-pq.extract_min()
-
-Extract Max
-
-Removes and returns the item with the highest priority.
-
-pq.extract_max()
-
-Update
-
-Changes the priority of an existing item.
+print(pq.peek())
 
 pq.update(item_id, 1)
 
-Delete
+print(pq.extract_min())
 
-Deletes an item using its ID.
+Operations
 
-pq.delete(item_id)
-
-Is Empty
-
-Checks whether the queue contains any items.
-
-pq.is_empty()
+Operation| Description
+"insert(value, priority)"| Adds a new item
+"peek()"| Returns the lowest-priority item
+"extract_min()"| Removes the lowest-priority item
+"extract_max()"| Removes the highest-priority item
+"update(id, priority)"| Changes an item's priority
+"delete(id)"| Removes an item
+"is_empty()"| Checks whether the queue is empty
 
 Persistence
 
-The queue data is stored in:
+Queue data is stored in:
 
 queue.json
 
+For example:
+
+{
+    "next_id": 4,
+    "items": {
+        "1": {
+            "value": "Study DSA",
+            "priority": 5
+        }
+    }
+}
+
 The file is updated whenever the queue is modified.
 
-When a new "PersistentPriorityQueue" object is created, it loads the saved data from the file.
+If the program is closed and started again, the previous queue data is loaded automatically.
 
-Testing
+Handling Updates and Deletes
 
-Automated tests are included in "test_module.py".
+The heaps may contain old entries after an item is updated or deleted.
 
-Run the tests with:
+Instead of searching through the heap and removing those entries immediately, the implementation checks whether a heap entry is still valid when it is accessed.
 
-python -m unittest test_module.py
+Invalid entries are skipped.
 
-The tests cover insertion, peek, extraction, update, delete, empty-checking, and persistence.
+This approach is commonly known as lazy deletion.
 
 Time Complexity
 
@@ -102,7 +110,25 @@ Update| O(log n)
 Delete| O(1)
 Is Empty| O(1)
 
-The JSON file adds some file-writing overhead whenever the queue is modified.
+The JSON file is rewritten when the queue is modified, so persistence adds file I/O overhead.
+
+Testing
+
+Automated tests are included in "test_module.py".
+
+Run:
+
+python -m unittest test_module.py
+
+The tests cover:
+
+- Insert and peek
+- Extract minimum
+- Extract maximum
+- Update
+- Delete
+- Empty queue check
+- Data persistence
 
 Project Structure
 
@@ -111,9 +137,14 @@ persistent-priority-queue/
 ├── module.py
 ├── test_module.py
 ├── queue.json
-└── README.md
+├── README.md
+└── .gitignore
 
 Requirements
 
 - Python 3
-- No external Python packages are required.
+- No external Python packages required
+
+Author
+
+Yashika Bansal
